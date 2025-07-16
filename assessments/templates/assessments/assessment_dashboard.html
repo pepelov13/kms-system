@@ -1,0 +1,42 @@
+{% extends "base.html" %} 
+{% block title %}Assessments Dashboard{% endblock %}
+
+{% block content %}
+<h1>All Assessments</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Created By</th>
+      <th>Created At</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for assessment in assessments %}
+      <tr>
+        <td>{{ assessment.title }}</td>
+        <td>{{ assessment.created_by.username }}</td>
+        <td>{{ assessment.created_at|date:"Y-m-d H:i" }}</td>
+        <td>
+          <a href="{% url 'assessments:edit_assessment' assessment.id %}">✏️ Edit</a> |
+          <a href="{% url 'assessments:delete_assessment' assessment.id %}">🗑️ Delete</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4">No assessments found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- ➕ Create link -->
+<div class="mt-3">
+  <a href="{% url 'assessments:create_assessment' %}">➕ Create New Assessment</a>
+</div>
+
+<!-- ✅ Back button -->
+<div class="mt-3">
+  <a href="{% url 'manager_dashboard' %}" class="btn btn-secondary">← Back to Manager Dashboard</a>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>{% if is_editing %}Edit{% else %}Create{% endif %} Assessment</h2>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Assessment fields -->
+    <div class="mb-3">
+      {{ assessment_form.as_p }}
+    </div>
+
+    <!-- Question formset management -->
+    {{ question_formset.management_form }}
+
+    <!-- Loop over paired question forms and answer formsets -->
+    {% for question_form, answer_formset in paired_forms %}
+      <div class="card mb-4 p-3">
+        <h5>Question {{ forloop.counter }}</h5>
+
+        <!-- Hidden fields for question id and delete checkbox -->
+        {{ question_form.id }}
+        <div class="form-check mb-2">
+          {{ question_form.DELETE }}
+          <label class="form-check-label">Delete question</label>
+        </div>
+
+        <!-- Question fields -->
+        <div class="mb-3">
+          {{ question_form.text.label_tag }}
+          {{ question_form.text }}
+          {% if question_form.text.errors %}
+            <div class="text-danger">{{ question_form.text.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Answer formset management -->
+        {{ answer_formset.management_form }}
+
+        <!-- Loop over answers -->
+        {% for answer_form in answer_formset.forms %}
+          <div class="border rounded p-2 mb-2 ms-4">
+            <!-- Hidden input for answer ID -->
+            {{ answer_form.id }}
+
+            <!-- Delete checkbox -->
+            <div class="form-check mb-1">
+              {{ answer_form.DELETE }}
+              <label class="form-check-label">Delete answer</label>
+            </div>
+
+            <!-- Answer text field -->
+            <div class="mb-2">
+              {{ answer_form.text.label_tag }}
+              {{ answer_form.text }}
+              {% if answer_form.text.errors %}
+                <div class="text-danger">{{ answer_form.text.errors }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Correct checkbox -->
+            <div class="form-check mb-2">
+              {{ answer_form.is_correct }}
+              <label class="form-check-label">Correct answer</label>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary">Save Assessment</button>
+  </form>
+</div>
+{% endblock %}

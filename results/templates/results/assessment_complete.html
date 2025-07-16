@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Assessment Completed: {{ assessment.title }}</h2>
+
+    <div class="mb-4">
+        <div class="progress" style="height: 30px;">
+            <div class="progress-bar {% if passed %}bg-success{% else %}bg-danger{% endif %}" 
+                role="progressbar" 
+                style="width: {{ score }}%;" 
+                aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100">
+                {{ score }}%
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <span class="badge {% if passed %}bg-success{% else %}bg-danger{% endif %} fs-5">
+            {% if passed %}Passed{% else %}Failed{% endif %}
+        </span>
+        <p class="mt-2"><strong>Passing Score:</strong> {{ passing_score }}%</p>
+    </div>
+
+    <!-- ✅ Time Summary Block -->
+    <div class="mb-4">
+        <h5>Time Summary:</h5>
+        <ul class="list-unstyled">
+            {% if time_taken %}
+                <li>
+                    <strong>Time Taken:</strong> {{ time_taken }}
+                    {% if over_time_limit %}
+                        <span class="badge bg-warning text-dark ms-2">⏱ Over Time Limit</span>
+                    {% endif %}
+                </li>
+            {% endif %}
+            {% if time_limit %}
+                <li><strong>Target Time:</strong> {{ time_limit }} minutes</li>
+            {% endif %}
+        </ul>
+    </div>
+    <!-- ✅ End Time Summary -->
+
+    {% if passed and incorrect_answers|length == 0 %}
+        <p class="text-success fs-5">Perfect score! You answered all questions correctly.</p>
+    {% elif passed %}
+        <p class="text-success fs-5">Good job! You passed the assessment.</p>
+    {% else %}
+        <p class="text-danger fs-5">You did not pass the assessment. Review the incorrect answers below.</p>
+    {% endif %}
+
+    {% if incorrect_answers %}
+        <h4 class="mt-4">Incorrectly Answered Questions</h4>
+        <div class="accordion" id="incorrectAnswersAccordion">
+            {% for ua in incorrect_answers %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="false" 
+                            aria-controls="collapse{{ forloop.counter }}">
+                        Question {{ forloop.counter }}: {{ ua.question.text|truncatechars:80 }}
+                    </button>
+                </h2>
+                <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" 
+                     aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#incorrectAnswersAccordion">
+                    <div class="accordion-body">
+                        <p><strong>Your Answer:</strong></p>
+                        <ul>
+                            {% with selected_ids=ua.selected_answer_ids %}
+                                {% for answer in ua.question.answers.all %}
+                                    {% if answer.id in selected_ids %}
+                                        <li>{{ answer.text }}</li>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if selected_ids|length == 0 %}
+                                    <li><em>No answer selected</em></li>
+                                {% endif %}
+                            {% endwith %}
+                        </ul>
+                        <p><strong>Correct Answer(s):</strong></p>
+                        <ul>
+                            {% for ans in ua.question.answers.all %}
+                                {% if ans.is_correct %}
+                                    <li>{{ ans.text }}</li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-center gap-3 mt-4">
+        {% if passed %}
+            <a href="{% url 'results:generate_certificate' result_id %}" class="btn btn-success">
+                Download Certificate
+            </a>
+        {% endif %}
+        <a href="{% url 'employee_dashboard' %}" class="btn btn-primary">
+            Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

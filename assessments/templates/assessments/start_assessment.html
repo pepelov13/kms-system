@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-3">{{ assessment.title }}</h2>
+<p>Question {{ current_index|add:1 }} of {{ total_questions }}</p>
+
+<div class="alert alert-info text-end">
+    ⏳ Time Remaining: <span id="timer" class="fw-bold"></span>
+</div>
+
+<form method="post" id="question-form">
+    {% csrf_token %}
+    <p class="mt-4"><strong>{{ question.text }}</strong></p>
+    {% for answer in answers %}
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="answers" value="{{ answer.id }}" id="answer{{ answer.id }}">
+            <label class="form-check-label" for="answer{{ answer.id }}">{{ answer.text }}</label>
+        </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary mt-4">
+        {% if current_index == total_questions|add:-1 %}
+            Finish
+        {% else %}
+            Next
+        {% endif %}
+    </button>
+</form>
+
+<script>
+    let timeLeft = {{ remaining_seconds|default:0|add:0 }};
+    const form = document.getElementById('question-form');
+
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updateTimer() {
+        const timerElement = document.getElementById('timer');
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            if (form) {
+                form.submit();  // auto-submit only if form exists
+            }
+        } else {
+            timerElement.innerText = formatTime(timeLeft);
+            timeLeft--;
+        }
+    }
+
+    window.onload = () => {
+        updateTimer();
+        setInterval(updateTimer, 1000);
+    };
+</script>
+{% endblock %}

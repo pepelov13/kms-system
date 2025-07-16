@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load results_extras %}
+
+{% block content %}
+  <div class="container my-4">
+    <h2 class="mb-3">
+      Results for 
+      {% if employee.get_full_name %}{{ employee.get_full_name }}
+      {% else %}{{ employee.username }}
+      {% endif %}
+    </h2>
+    
+    <h4 class="mb-4">Assessment: {{ result.assessment.title }}</h4>
+
+    {% if total_answers > 0 %}
+      <div class="alert alert-info">
+        <strong>Score:</strong> {{ correct_answers }} / {{ total_answers }} correct
+      </div>
+    {% else %}
+      <div class="alert alert-warning">
+        No answers submitted for this assessment.
+      </div>
+    {% endif %}
+
+    <div class="list-group">
+      {% for answer in user_answers %}
+        <div class="list-group-item mb-2 
+          {% if answer.selected_answer.is_correct %}
+            bg-success-subtle
+          {% else %}
+            bg-danger-subtle
+          {% endif %}
+        ">
+          <p><strong>Question {{ forloop.counter }}:</strong> {{ answer.question.text }}</p>
+          <p><strong>Answer Given:</strong> {{ answer.selected_answer.text }}</p>
+          <p>
+            <strong>Status:</strong>
+            {% if answer.selected_answer.is_correct %}
+              ✅ Correct
+            {% else %}
+              ❌ Incorrect
+            {% endif %}
+          </p>
+
+          {% if not answer.selected_answer.is_correct %}
+            <p><strong>Correct Answer(s):</strong>
+              {% if answer.correct_answers %}
+                {% for correct_answer in answer.correct_answers %}
+                  {{ correct_answer.text }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+              {% else %}
+                No correct answer found.
+              {% endif %}
+            </p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <a href="{% url 'results:employee_results' %}" class="btn btn-secondary mt-4">← Back to Results</a>
+  </div>
+{% endblock %}

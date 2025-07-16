@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="text-center mb-5">
+    <h1 class="display-5">📊 Manager Dashboard</h1>
+    <p class="lead text-muted">Welcome! Choose an action below to manage assessments and results.</p>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- Create Assessment -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body text-center">
+          <h5 class="card-title">📝 Create Assessment</h5>
+          <p class="card-text">Start building a new assessment for employees.</p>
+          <a href="{% url 'assessments:create_assessment' %}" class="btn btn-primary">Create</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Assessments -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body text-center">
+          <h5 class="card-title">📋 View All Assessments</h5>
+          <p class="card-text">Browse or edit all existing assessments.</p>
+          <a href="{% url 'assessments:assessment_dashboard' %}" class="btn btn-secondary">View Assessments</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assign Assessment -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body text-center">
+          <h5 class="card-title">📬 Assign Assessment</h5>
+          <p class="card-text">Assign assessments to specific employees.</p>
+          <a href="{% url 'assessments:assign_assessment' %}" class="btn btn-warning">Assign</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Results -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body text-center">
+          <h5 class="card-title">📈 Assessment Results</h5>
+          <p class="card-text">Review employee performance on past assessments.</p>
+          <a href="{% url 'assessments:manager_results' %}" class="btn btn-success">View Results</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export Results -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body text-center">
+          <h5 class="card-title">⬇️ Export Results</h5>
+          <p class="card-text">Download a CSV file of all assessment results.</p>
+          <a href="{% url 'results:export_results_csv' %}" class="btn btn-dark">Export CSV</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logout -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body text-center">
+          <h5 class="card-title">🔒 Logout</h5>
+          <p class="card-text">End your current session securely.</p>
+          <a href="{% url 'logout' %}" class="btn btn-outline-danger">Logout</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

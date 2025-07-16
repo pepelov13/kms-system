@@ -1,0 +1,14 @@
+ <!-- results/templates/results/start_assessment.html -->
+{% extends 'base_generic.html' %}
+
+{% block content %}
+  <h1>Start Assessment: {{ assessment.title }}</h1>
+  <p>Assessment description or instructions go here.</p>
+
+  <!-- You can later add forms to answer questions or show the first question -->
+  <form method="post">
+      {% csrf_token %}
+      <button type="submit">Start Assessment</button>
+  </form>
+{% endblock %}
+

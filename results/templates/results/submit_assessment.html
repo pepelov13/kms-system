@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ assessment.title }}</h2>
+<p>{{ assessment.description }}</p>
+
+<form method="post">
+  {% csrf_token %}
+  {% for question in assessment.questions.all %}
+    <div>
+      <strong>{{ forloop.counter }}. {{ question.text }}</strong><br>
+      {% for answer in question.answers.all %}
+        <label>
+          <input type="radio" name="question_{{ question.id }}" value="{{ answer.id }}">
+          {{ answer.text }}
+        </label><br>
+      {% endfor %}
+    </div>
+    <hr>
+  {% endfor %}
+  <button type="submit" class="btn btn-primary">Submit Answers</button>
+</form>
+{% endblock %}
+

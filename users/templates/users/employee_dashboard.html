@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Welcome, {{ user.first_name|default:user.username }}</h2>
+
+  <div class="row">
+    <!-- Pending Assessments -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-warning text-white">
+          <strong>🕐 Pending Assessments</strong>
+        </div>
+        <div class="card-body">
+          {% if pending_assessments %}
+            <ul class="list-group list-group-flush">
+              {% for item in pending_assessments %}
+                {% with assessment=item.assessment %}
+                  <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start flex-column flex-md-row">
+                      <div>
+                        <strong>{{ assessment.title }}</strong><br>
+                        {% if item.time_limit %}
+                          ⏱ Time Limit: {{ item.time_limit }} minute{{ item.time_limit|pluralize }}<br>
+                        {% endif %}
+                        🔁 Retake Allowed: {{ item.allow_retake|yesno:"Yes,No" }}
+                      </div>
+                      <div class="mt-2 mt-md-0">
+                        <a href="{% url 'assessments:start_assessment' assessment.id %}" class="btn btn-sm btn-primary">Start</a>
+                      </div>
+                    </div>
+                  </li>
+                {% endwith %}
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">No pending assessments.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Completed Assessments -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">
+          <strong>✅ Completed Assessments</strong>
+        </div>
+        <div class="card-body">
+          {% if completed_assessments %}
+            <ul class="list-group list-group-flush">
+              {% for item in completed_assessments %}
+                {% with assessment=item.assessment %}
+                  <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start flex-column flex-md-row">
+                      <div>
+                        <strong>{{ assessment.title }}</strong><br>
+                        Score: {{ item.score }}%
+                        {% if item.score >= assessment.passing_score %}
+                          <span class="badge bg-success ms-2">Passed</span>
+                        {% else %}
+                          <span class="badge bg-danger ms-2">Failed</span>
+                        {% endif %}
+                        <br>
+                        {% if item.time_limit %}
+                          ⏱ Time Limit: {{ item.time_limit }} minute{{ item.time_limit|pluralize }}<br>
+                        {% endif %}
+                        {% if item.allow_retake %}
+                          <span class="badge bg-success mt-1">Retake Available</span>
+                        {% else %}
+                          <span class="badge bg-secondary mt-1">Retake Not Allowed</span>
+                        {% endif %}
+                      </div>
+                      <div class="mt-2 mt-md-0">
+                        <a href="{% url 'results:assessment_complete' assessment.id %}" class="btn btn-sm btn-outline-success me-2">View Result</a>
+                        {% if item.allow_retake %}
+                          <a href="{% url 'assessments:take_assessment' assessment.id %}" class="btn btn-sm btn-warning">Retake</a>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </li>
+                {% endwith %}
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">You haven’t completed any assessments yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Logout Button -->
+    <div class="text-center mt-4">
+      <a href="{% url 'logout' %}" class="btn btn-outline-danger">Logout</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
