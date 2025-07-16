@@ -1,0 +1,15 @@
+ {% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+  <h3>Confirm Deletion</h3>
+  <p>Are you sure you want to delete the assessment: <strong>{{ assessment.title }}</strong>?</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <a href="{% url 'manager_dashboard' %}" class="btn btn-secondary">Cancel</a>
+    <button type="submit" class="btn btn-danger">Delete</button>
+  </form>
+</div>
+{% endblock %}
+

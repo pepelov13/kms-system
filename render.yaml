@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: kms-system
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn kms_system.wsgi:application"
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: kms_system.settings
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kms-db
+          property: connectionString
+
+databases:
+  - name: kms-db
+    postgresMajorVersion: 15
+    plan: free
+

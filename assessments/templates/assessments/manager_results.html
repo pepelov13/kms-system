@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Employee Assessment Results</h2>
+
+{% if results %}
+  {% for username, assessments in results.items %}
+    <div class="employee-results mb-6 p-4 border rounded bg-gray-100">
+      <h3 class="text-lg font-bold mb-2">{{ username }}</h3>
+
+      {% for assessment_title, data in assessments.items %}
+        <div class="assessment-result mb-4 p-3 border bg-white rounded shadow-sm">
+          <h4 class="font-semibold text-blue-700">{{ assessment_title }}</h4>
+          <p class="mb-2">
+            Score: {{ data.correct }} / {{ data.total }} correct ({{ data.correct|floatformat:2 }}/{{ data.total }} = {{ data.correct|divisibleby:data.total|yesno:"100,0" }}%)
+          </p>
+
+          <table class="table-auto w-full text-sm text-left border">
+            <thead class="bg-gray-200">
+              <tr>
+                <th class="px-2 py-1 border">Question</th>
+                <th class="px-2 py-1 border">Selected</th>
+                <th class="px-2 py-1 border">Correct</th>
+                <th class="px-2 py-1 border">Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for answer in data.answers %}
+                <tr class="{% if answer.is_correct %}bg-green-50{% else %}bg-red-50{% endif %}">
+                  <td class="px-2 py-1 border">{{ answer.question_text }}</td>
+                  <td class="px-2 py-1 border">{{ answer.selected_letter }}. {{ answer.selected_text }}</td>
+                  <td class="px-2 py-1 border">{{ answer.correct_letter }}. {{ answer.correct_text }}</td>
+                  <td class="px-2 py-1 border font-semibold">
+                    {% if answer.is_correct %}<span class="text-green-700">Correct</span>
+                    {% else %}<span class="text-red-700">Incorrect</span>{% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+{% else %}
+  <p>No results available yet.</p>
+{% endif %}
+
+{% endblock %}

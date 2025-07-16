@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Add Answers for Questions in: {{ assessment.title }}</h2>
+
+<form method="post">
+  {% csrf_token %}
+
+  {% for question, formset in question_answer_formsets %}
+    <div class="question-block" data-question-id="{{ question.id }}">
+      <h4>{{ question.text }}</h4>
+      {{ formset.management_form }}
+
+      <div class="answers-container" id="answers-q{{ question.id }}">
+        {% for form in formset %}
+          <div class="answer-form">
+            {{ form.as_p }}
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Add Answer button -->
+      <button type="button" class="add-answer-btn" data-question-id="{{ question.id }}">➕ Add Answer</button>
+      <hr>
+    </div>
+  {% endfor %}
+
+  <button type="submit">✅ Finish Assessment</button>
+</form>
+
+<!-- Hidden empty form template -->
+{% for question, formset in question_answer_formsets %}
+  <div id="empty-form-template-q{{ question.id }}" style="display: none;">
+    {{ formset.empty_form.as_p|safe }}
+  </div>
+{% endfor %}
+
+<!-- JavaScript -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const addButtons = document.querySelectorAll(".add-answer-btn");
+
+  addButtons.forEach(button => {
+    button.addEventListener("click", () => {
+      const questionId = button.getAttribute("data-question-id");
+      const container = document.getElementById("answers-q" + questionId);
+      const totalFormsInput = document.querySelector(`input[name="q${questionId}-TOTAL_FORMS"]`);
+      const emptyFormTemplate = document.getElementById("empty-form-template-q" + questionId).innerHTML;
+
+      const currentFormCount = container.querySelectorAll(".answer-form").length;
+      const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount);
+
+      // Append new answer form
+      const wrapper = document.createElement("div");
+      wrapper.classList.add("answer-form");
+      wrapper.innerHTML = newFormHtml;
+      container.appendChild(wrapper);
+
+      // Increment total forms count
+      if (totalFormsInput) {
+        totalFormsInput.value = currentFormCount + 1;
+      }
+    });
+  });
+});
+</script>
+
+{% endblock %}

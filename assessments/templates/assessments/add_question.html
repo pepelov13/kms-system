@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>{{ is_editing|yesno:"Edit Question,Add Question" }}</h2>
+  <form method="post" id="answer-formset-form" novalidate>
+    {% csrf_token %}
+    <div class="mb-3">
+      {{ question_form.text.label_tag }}
+      {{ question_form.text }}
+      {% if question_form.text.errors %}
+      <div class="text-danger">{{ question_form.text.errors }}</div>
+      {% endif %}
+    </div>
+
+    <h4>Answers</h4>
+    {{ answer_formset.management_form }}
+    <div id="answer-forms-container">
+      {% for form in answer_formset %}
+      <div class="answer-form border rounded p-3 mb-3 position-relative">
+        <div class="mb-2">
+          {{ form.text.label_tag }}
+          {{ form.text }}
+          {% if form.text.errors %}
+          <div class="text-danger">{{ form.text.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="form-check mb-2">
+          {{ form.is_correct }}
+          {{ form.is_correct.label_tag }}
+          {% if form.is_correct.errors %}
+          <div class="text-danger">{{ form.is_correct.errors }}</div>
+          {% endif %}
+        </div>
+        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 remove-answer" title="Remove answer">&times;</button>
+      </div>
+      {% endfor %}
+    </div>
+
+    <button type="button" class="btn btn-outline-primary mb-3" id="add-answer">Add Another Answer</button>
+
+    <div>
+      <button type="submit" class="btn btn-primary" name="next">Next</button>
+      <button type="submit" class="btn btn-success" name="save">Save & Finish</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  (function() {
+    const formsetPrefix = '{{ answer_formset.prefix }}';
+    const totalFormsInput = document.querySelector(`#id_${formsetPrefix}-TOTAL_FORMS`);
+    const formContainer = document.getElementById('answer-forms-container');
+    const addButton = document.getElementById('add-answer');
+
+    addButton.addEventListener('click', () => {
+      let totalForms = parseInt(totalFormsInput.value);
+      const emptyFormHtml = `{{ answer_formset.empty_form.as_p|escapejs }}`;
+
+      // Wrap in div with same classes and remove button, to keep styling consistent
+      let newFormHtml = `
+      <div class="answer-form border rounded p-3 mb-3 position-relative">
+        ${emptyFormHtml}
+        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 remove-answer" title="Remove answer">&times;</button>
+      </div>`;
+
+      // Replace __prefix__ with current totalForms index
+      newFormHtml = newFormHtml.replace(/__prefix__/g, totalForms);
+
+      // Append new form div
+      const div = document.createElement('div');
+      div.innerHTML = newFormHtml;
+      formContainer.appendChild(div.firstElementChild);
+
+      // Update total forms count
+      totalFormsInput.value = totalForms + 1;
+    });
+
+    formContainer.addEventListener('click', (e) => {
+      if (e.target.classList.contains('remove-answer')) {
+        const answerFormDiv = e.target.closest('.answer-form');
+        if (answerFormDiv) {
+          answerFormDiv.remove();
+
+          // Adjust TOTAL_FORMS
+          let forms = formContainer.querySelectorAll('.answer-form');
+          totalFormsInput.value = forms.length;
+
+          // Re-index form fields so Django can parse properly
+          forms.forEach((formDiv, index) => {
+            formDiv.querySelectorAll('input, select, textarea, label').forEach(el => {
+              // Replace form index numbers in names and ids
+              if (el.name) {
+                el.name = el.name.replace(/-\d+-/, `-${index}-`);
+              }
+              if (el.id) {
+                el.id = el.id.replace(/-\d+-/, `-${index}-`);
+              }
+              if (el.tagName.toLowerCase() === 'label' && el.htmlFor) {
+                el.htmlFor = el.htmlFor.replace(/-\d+-/, `-${index}-`);
+              }
+            });
+          });
+        }
+      }
+    });
+  })();
+</script>
+{% endblock %}
