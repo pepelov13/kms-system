@@ -114,7 +114,7 @@ def assessment_complete(request, assessment_id):
     over_time_limit = False
     if result.start_time and result.submitted_at:
         # Format time_taken as HH:MM:SS
-        time_taken_raw = result.submitted_at - result.started_at
+        time_taken_raw = result.submitted_at - result.start_time
         seconds = int(time_taken_raw.total_seconds())
         hours, remainder = divmod(seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
