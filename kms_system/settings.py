@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(os.path.join(BASE_DIR, '.env'))
+load_dotenv()  # Load from .env file
 
 
 # SECURITY
@@ -73,8 +73,7 @@ WSGI_APPLICATION = 'kms_system.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         default='sqlite:///db.sqlite3',  # fallback for local
-        conn_max_age=600,
-        ssl_require=True
+        conn_max_age=600
     )
 }
 
