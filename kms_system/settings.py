@@ -1,9 +1,11 @@
 import os
 from pathlib import Path
 import dj_database_url
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 
 # SECURITY
@@ -70,9 +72,9 @@ WSGI_APPLICATION = 'kms_system.wsgi.application'
 # Database
 DATABASES = {
     'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        default='sqlite:///db.sqlite3',  # fallback for local
         conn_max_age=600,
-        ssl_require=not DEBUG
+        ssl_require=True
     )
 }
 
