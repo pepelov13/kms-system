@@ -8,7 +8,14 @@
         {% for question in questions %}
             <div class="card mb-3">
                 <div class="card-body">
-                    <h5 class="card-title">{{ question.text }}</h5>
+                    <h5 class="card-title">
+                        {{ question.text }}
+                        {% if question.is_multiple_choice %}
+                            <span class="badge bg-info text-dark ms-2">Multiple Choice</span>
+                        {% else %}
+                            <span class="badge bg-secondary text-light ms-2">Single Choice</span>
+                        {% endif %}
+                    </h5>
                     <ul class="list-group mb-2">
                         {% for answer in question.answers.all %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">

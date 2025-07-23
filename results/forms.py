@@ -5,9 +5,13 @@ class UserAnswerForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.question = kwargs.pop('question')
         super().__init__(*args, **kwargs)
-        # Limit answers to only those related to the given question
-        self.fields['selected_answer'].queryset = self.question.answers.all()
+
+        # Nur Antworten dieser Frage anzeigen
+        self.fields['selected_answers'].queryset = self.question.answers.all()
+
+        # Widget für Mehrfachauswahl (Checkboxen)
+        self.fields['selected_answers'].widget = forms.CheckboxSelectMultiple()
 
     class Meta:
         model = UserAnswer
-        fields = ['selected_answer']
+        fields = ['selected_answers']

@@ -16,7 +16,7 @@ class AssessmentForm(forms.ModelForm):
 class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
-        fields = ['text']
+        fields = ['text', 'is_multiple_choice']
 
 class AnswerForm(forms.ModelForm):
     class Meta:

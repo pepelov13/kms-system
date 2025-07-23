@@ -61,26 +61,26 @@
                     </button>
                 </h2>
                 <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" 
-                     aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#incorrectAnswersAccordion">
+                    aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#incorrectAnswersAccordion">
                     <div class="accordion-body">
-                        <p><strong>Your Answer:</strong></p>
+                        <p><strong>Your Answer(s):</strong></p>
                         <ul>
-                            {% with selected_ids=ua.selected_answer_ids %}
+                            {% if ua.selected_answer_ids %}
                                 {% for answer in ua.question.answers.all %}
-                                    {% if answer.id in selected_ids %}
+                                    {% if answer.id in ua.selected_answer_ids %}
                                         <li>{{ answer.text }}</li>
                                     {% endif %}
                                 {% endfor %}
-                                {% if selected_ids|length == 0 %}
-                                    <li><em>No answer selected</em></li>
-                                {% endif %}
-                            {% endwith %}
+                            {% else %}
+                                <li><em>No answer selected</em></li>
+                            {% endif %}
                         </ul>
+
                         <p><strong>Correct Answer(s):</strong></p>
                         <ul>
-                            {% for ans in ua.question.answers.all %}
-                                {% if ans.is_correct %}
-                                    <li>{{ ans.text }}</li>
+                            {% for answer in ua.question.answers.all %}
+                                {% if answer.id in ua.correct_answer_ids %}
+                                    <li>{{ answer.text }}</li>
                                 {% endif %}
                             {% endfor %}
                         </ul>

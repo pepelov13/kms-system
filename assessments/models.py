@@ -30,6 +30,7 @@ class Assessment(models.Model):
 class Question(models.Model):
     assessment = models.ForeignKey(Assessment, related_name='questions', on_delete=models.CASCADE)
     text = models.CharField(max_length=500)
+    is_multiple_choice = models.BooleanField(default=False)  # ✅ NEW
 
     def __str__(self):
         return self.text

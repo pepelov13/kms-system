@@ -10,12 +10,41 @@
 <form method="post" id="question-form">
     {% csrf_token %}
     <p class="mt-4"><strong>{{ question.text }}</strong></p>
-    {% for answer in answers %}
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="answers" value="{{ answer.id }}" id="answer{{ answer.id }}">
-            <label class="form-check-label" for="answer{{ answer.id }}">{{ answer.text }}</label>
-        </div>
-    {% endfor %}
+
+    {% if question.is_multiple_choice %}
+        <p class="text-muted small fst-italic">Select all that apply:</p>
+        {% for answer in answers %}
+            <div class="form-check">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="selected_answers[]"
+                    value="{{ answer.id }}"
+                    id="answer{{ answer.id }}"
+                    {% if answer.id|stringformat:"s" in selected_answer_ids %}checked{% endif %}
+                >
+                <label class="form-check-label" for="answer{{ answer.id }}">
+                    {{ answer.text }}
+                </label>
+            </div>
+        {% endfor %}
+    {% else %}
+        {% for answer in answers %}
+            <div class="form-check">
+                <input
+                    class="form-check-input"
+                    type="radio"
+                    name="selected_answers"
+                    value="{{ answer.id }}"
+                    id="answer{{ answer.id }}"
+                    {% if answer.id|stringformat:"s" in selected_answer_ids %}checked{% endif %}
+                >
+                <label class="form-check-label" for="answer{{ answer.id }}">
+                    {{ answer.text }}
+                </label>
+            </div>
+        {% endfor %}
+    {% endif %}
 
     <button type="submit" class="btn btn-primary mt-4">
         {% if current_index == total_questions|add:-1 %}
@@ -41,7 +70,7 @@
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             if (form) {
-                form.submit();  // auto-submit only if form exists
+                form.submit();
             }
         } else {
             timerElement.innerText = formatTime(timeLeft);

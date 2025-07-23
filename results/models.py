@@ -26,14 +26,14 @@ class UserAnswer(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_answers')
     assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE, related_name='user_answers')
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='user_answers')
-    selected_answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='user_answers')
+    selected_answers = models.ManyToManyField(Answer)
     answered_at = models.DateTimeField(auto_now_add=True)
 
     def is_correct(self):
         return self.selected_answer.is_correct
 
     class Meta:
-        unique_together = ('user', 'question')  # One answer per question per user
+        unique_together = ('user', 'question', 'assessment')  # One answer per question per user
 
     def __str__(self):
         return f"{self.user.username} → Q: {self.question.text[:50]} → A: {self.selected_answer.text[:50]}"

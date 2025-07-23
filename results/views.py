@@ -66,12 +66,25 @@ def submit_assessment(request, assessment_id):
     assessment = get_object_or_404(Assessment, id=assessment_id)
     result, _ = AssessmentResult.objects.get_or_create(user=request.user, assessment=assessment)
 
-    # Score calculation based on saved answers
-    user_answers = UserAnswer.objects.filter(user=request.user, assessment=assessment)
+    # Prefetch selected answers efficiently
+    user_answers = UserAnswer.objects.filter(user=request.user, assessment=assessment).prefetch_related('selected_answers')
     total_questions = assessment.questions.count()
-    correct_answers = sum(1 for ua in user_answers if ua.selected_answer.is_correct)
+    correct_questions = 0
 
-    score = int((correct_answers / total_questions) * 100) if total_questions > 0 else 0
+    for question in assessment.questions.all():
+        try:
+            ua = user_answers.get(question=question)
+            selected_ids = set(ua.selected_answers.values_list('id', flat=True))
+        except UserAnswer.DoesNotExist:
+            selected_ids = set()
+
+        correct_ids = set(question.answers.filter(is_correct=True).values_list('id', flat=True))
+
+        # ✅ Full match: all correct selected, and no incorrect selected
+        if selected_ids == correct_ids:
+            correct_questions += 1
+
+    score = int((correct_questions / total_questions) * 100) if total_questions > 0 else 0
 
     result.score = score
     result.status = 'Completed'
@@ -87,42 +100,54 @@ def assessment_complete(request, assessment_id):
     assessment = get_object_or_404(Assessment, id=assessment_id)
     result = get_object_or_404(AssessmentResult, assessment=assessment, user=request.user)
 
-    user_answers = UserAnswer.objects.filter(user=request.user, assessment=assessment)
+    user_answers = UserAnswer.objects.filter(user=request.user, assessment=assessment).select_related('question').prefetch_related('selected_answers')
     total_questions = assessment.questions.count()
     incorrect_questions = []
-
     correct_count = 0
 
-    for question in assessment.questions.all():
-        correct_answers = set(question.answers.filter(is_correct=True).values_list('id', flat=True))
-        selected_ids = set(user_answers.filter(question=question).values_list('selected_answer_id', flat=True))
+    # Create a lookup of user answers per question
+    user_answers_by_question = {ua.question_id: ua for ua in user_answers}
 
-        if selected_ids == correct_answers:
+    for question in assessment.questions.all():
+        correct_answer_ids = set(question.answers.filter(is_correct=True).values_list('id', flat=True))
+        user_answer = user_answers_by_question.get(question.id)
+
+        selected_ids = set()
+        if user_answer:
+            selected_ids = set(user_answer.selected_answers.values_list('id', flat=True))
+
+        if selected_ids == correct_answer_ids:
             correct_count += 1
         else:
             incorrect_questions.append({
                 'question': question,
                 'selected_answer_ids': list(selected_ids),
+                'correct_answer_ids': list(correct_answer_ids),
             })
 
-    score = (correct_count / total_questions) * 100
+    score = (correct_count / total_questions) * 100 if total_questions > 0 else 0
     passing_score = assessment.passing_score
     passed = score >= passing_score
 
+    result.submitted_at = timezone.now()
+
     # Time calculations
-    time_taken = None
+    time_taken_str = None
     over_time_limit = False
     if result.start_time and result.submitted_at:
-        # Format time_taken as HH:MM:SS
         time_taken_raw = result.submitted_at - result.start_time
-        seconds = int(time_taken_raw.total_seconds())
-        hours, remainder = divmod(seconds, 3600)
+        total_seconds = int(time_taken_raw.total_seconds())
+        hours, remainder = divmod(total_seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
         time_taken_str = f"{hours}h {minutes}m {seconds}s"
 
+        if assessment.duration_minutes:
+            allowed_seconds = assessment.duration_minutes * 60
+            over_time_limit = total_seconds > allowed_seconds
+
+    # Save result
     result.score = score
     result.status = 'Completed'
-    result.submitted_at = timezone.now()
     result.save()
 
     return render(request, 'results/assessment_complete.html', {
@@ -133,7 +158,7 @@ def assessment_complete(request, assessment_id):
         'incorrect_answers': incorrect_questions,
         'result_id': result.id,
         'time_taken': time_taken_str,
-        'time_limit': assessment.time_limit,
+        'time_limit': assessment.duration_minutes,
         'over_time_limit': over_time_limit,
     })
 

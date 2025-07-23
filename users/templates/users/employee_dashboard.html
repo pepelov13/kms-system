@@ -74,7 +74,7 @@
                       <div class="mt-2 mt-md-0">
                         <a href="{% url 'results:assessment_complete' assessment.id %}" class="btn btn-sm btn-outline-success me-2">View Result</a>
                         {% if item.allow_retake %}
-                          <a href="{% url 'assessments:take_assessment' assessment.id %}" class="btn btn-sm btn-warning">Retake</a>
+                          <a href="{% url 'assessments:start_assessment' assessment.id %}" class="btn btn-sm btn-warning">Retake</a>
                         {% endif %}
                       </div>
                     </div>

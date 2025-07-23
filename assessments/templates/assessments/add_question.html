@@ -13,6 +13,15 @@
       <div class="text-danger">{{ question_form.text.errors }}</div>
       {% endif %}
     </div>
+    
+    <div class="mb-3 form-check">
+      {{ question_form.is_multiple_choice }}
+      {{ question_form.is_multiple_choice.label_tag }}
+      {% if question_form.is_multiple_choice.errors %}
+      <div class="text-danger">{{ question_form.is_multiple_choice.errors }}</div>
+      {% endif %}
+    </div>
+
 
     <h4>Answers</h4>
     {{ answer_formset.management_form }}
