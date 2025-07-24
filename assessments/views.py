@@ -195,7 +195,7 @@ def start_assessment(request, assessment_id):
         result.start_time = timezone.now()
         result.save()
 
-    duration_minutes = assessment.duration_minutes or 15
+    duration_minutes = assessment.time_limit or 15
     end_time = result.start_time + timedelta(minutes=duration_minutes)
     remaining_seconds = max(0, int((end_time - timezone.now()).total_seconds()))
 
@@ -269,6 +269,47 @@ def start_assessment(request, assessment_id):
         'selected_answer_ids': selected_answer_ids,
     })
 
+@login_required
+def retake_assessment(request, assessment_id):
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+
+    if not assessment.allow_retake:
+        messages.error(request, "Retakes are not allowed for this assessment.")
+        return redirect('employee_dashboard')
+
+    result = AssessmentResult.objects.filter(user=request.user, assessment=assessment).first()
+
+    if result:
+        if assessment.max_retakes is not None and result.retake_count >= assessment.max_retakes:
+            messages.error(request, "You have reached the retake limit for this assessment.")
+            return redirect('employee_dashboard')
+
+        # ✅ Increment retake count and reset status
+        result.retake_count += 1
+        result.status = 'Not Started'
+        result.score = None
+        result.submitted_at = None
+        result.start_time = None
+        result.save()
+
+    else:
+        # ✅ First attempt = retake count starts at 1
+        result = AssessmentResult.objects.create(
+            user=request.user,
+            assessment=assessment,
+            status='Not Started',
+            retake_count=1
+        )
+
+    # ✅ Delete previous user answers
+    UserAnswer.objects.filter(user=request.user, assessment=assessment).delete()
+
+    # ✅ Remove old session-based question order (if randomized)
+    session_key = f'assessment_{assessment_id}_question_order'
+    if session_key in request.session:
+        del request.session[session_key]
+
+    return redirect('assessments:start_assessment', assessment_id=assessment_id)
 
 
 #assessment dashboard

@@ -13,6 +13,7 @@ class AssessmentResult(models.Model):
     score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
     start_time = models.DateTimeField(null=True, blank=True)
+    retake_count = models.PositiveIntegerField(default=0)
     
     def __str__(self):
         return f"{self.user.username} - {self.assessment.title} - {self.score}"

@@ -65,16 +65,29 @@
                         {% if item.time_limit %}
                           ⏱ Time Limit: {{ item.time_limit }} minute{{ item.time_limit|pluralize }}<br>
                         {% endif %}
-                        {% if item.allow_retake %}
+                        {% if assessment.allow_retake %}
                           <span class="badge bg-success mt-1">Retake Available</span>
                         {% else %}
                           <span class="badge bg-secondary mt-1">Retake Not Allowed</span>
                         {% endif %}
+                        {% if assessment.max_retakes %}
+                          <div class="text-muted small mt-1">Retakes used: {{ item.retake_count }} / {{ assessment.max_retakes }}</div>
+                        {% elif assessment.allow_retake %}
+                          <div class="text-muted small mt-1">Unlimited retakes</div>
+                        {% endif %}
                       </div>
                       <div class="mt-2 mt-md-0">
                         <a href="{% url 'results:assessment_complete' assessment.id %}" class="btn btn-sm btn-outline-success me-2">View Result</a>
-                        {% if item.allow_retake %}
-                          <a href="{% url 'assessments:start_assessment' assessment.id %}" class="btn btn-sm btn-warning">Retake</a>
+                        {% if assessment.allow_retake %}
+                          {% if assessment.max_retakes %}
+                            {% if item.retake_count < assessment.max_retakes %}
+                              <a href="{% url 'assessments:retake_assessment' assessment.id %}" class="btn btn-sm btn-warning">Retake</a>
+                            {% else %}
+                              <button class="btn btn-sm btn-secondary" disabled>Retake Limit Reached</button>
+                            {% endif %}
+                          {% else %}
+                            <a href="{% url 'assessments:retake_assessment' assessment.id %}" class="btn btn-sm btn-warning">Retake</a>
+                          {% endif %}
                         {% endif %}
                       </div>
                     </div>
@@ -88,6 +101,7 @@
         </div>
       </div>
     </div>
+
 
     <!-- Logout Button -->
     <div class="text-center mt-4">

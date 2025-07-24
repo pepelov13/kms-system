@@ -13,6 +13,7 @@ from datetime import timedelta
 from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from django.utils.timezone import now
 
 User = get_user_model()
 
@@ -66,6 +67,20 @@ def submit_assessment(request, assessment_id):
     assessment = get_object_or_404(Assessment, id=assessment_id)
     result, _ = AssessmentResult.objects.get_or_create(user=request.user, assessment=assessment)
 
+    # 🕒 Check if submission is too late
+    if result.start_time:
+        duration = assessment.duration_minutes or 15
+        allowed_end_time = result.start_time + timedelta(minutes=duration)
+        if now() > allowed_end_time:
+            result.status = 'Completed'
+            result.score = 0
+            if not result.submitted_at:
+                result.submitted_at = now()
+            result.save()
+
+            messages.error(request, "Your time is up. The assessment was automatically submitted late and scored 0%.")
+            return redirect('results:assessment_complete', assessment_id=assessment.id)
+
     # Prefetch selected answers efficiently
     user_answers = UserAnswer.objects.filter(user=request.user, assessment=assessment).prefetch_related('selected_answers')
     total_questions = assessment.questions.count()
@@ -80,7 +95,6 @@ def submit_assessment(request, assessment_id):
 
         correct_ids = set(question.answers.filter(is_correct=True).values_list('id', flat=True))
 
-        # ✅ Full match: all correct selected, and no incorrect selected
         if selected_ids == correct_ids:
             correct_questions += 1
 
@@ -88,11 +102,13 @@ def submit_assessment(request, assessment_id):
 
     result.score = score
     result.status = 'Completed'
-    result.submitted_at = timezone.now()
+    if not result.submitted_at:
+        result.submitted_at = now()
     result.save()
 
     messages.success(request, f"You scored {score}%")
     return redirect('results:assessment_complete', assessment_id=assessment.id)
+
 
 
 @login_required
@@ -105,7 +121,6 @@ def assessment_complete(request, assessment_id):
     incorrect_questions = []
     correct_count = 0
 
-    # Create a lookup of user answers per question
     user_answers_by_question = {ua.question_id: ua for ua in user_answers}
 
     for question in assessment.questions.all():
@@ -129,9 +144,7 @@ def assessment_complete(request, assessment_id):
     passing_score = assessment.passing_score
     passed = score >= passing_score
 
-    result.submitted_at = timezone.now()
-
-    # Time calculations
+    # ⚠️ Do NOT update submitted_at again
     time_taken_str = None
     over_time_limit = False
     if result.start_time and result.submitted_at:
@@ -145,10 +158,10 @@ def assessment_complete(request, assessment_id):
             allowed_seconds = assessment.duration_minutes * 60
             over_time_limit = total_seconds > allowed_seconds
 
-    # Save result
-    result.score = score
-    result.status = 'Completed'
-    result.save()
+    # Optional: re-save score if you want, but not necessary
+    # result.score = score
+    # result.status = 'Completed'
+    # result.save()
 
     return render(request, 'results/assessment_complete.html', {
         'assessment': assessment,

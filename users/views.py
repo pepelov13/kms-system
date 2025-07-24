@@ -38,38 +38,62 @@ def employee_dashboard(request):
     assigned_assessments = Assignment.objects.filter(employee=user).select_related('assessment')
     assigned_ids = [a.assessment.id for a in assigned_assessments]
 
-    # Completed assessments
-    completed_results = AssessmentResult.objects.filter(user=user, status='Completed').select_related('assessment')
-    completed_ids = [r.assessment.id for r in completed_results]
+    # ✅ Fetch all results (not just Completed), to count all attempts
+    all_results = AssessmentResult.objects.filter(user=user, assessment__id__in=assigned_ids)
 
-    # Pending = Assigned but not completed
+    # ✅ Determine which assessments have at least one completed attempt
+    completed_ids = all_results.filter(status='Completed').values_list('assessment_id', flat=True).distinct()
     pending_assessments = Assessment.objects.filter(id__in=assigned_ids).exclude(id__in=completed_ids)
-    completed_assessments = Assessment.objects.filter(id__in=completed_ids).prefetch_related('user_answers')
+    completed_assessments = Assessment.objects.filter(id__in=completed_ids)
 
-    # Add retake info to each completed assessment
+    # ✅ Group all results by assessment for reuse
+    results_by_assessment = {}
+    for result in all_results:
+        results_by_assessment.setdefault(result.assessment_id, []).append(result)
+
+    # Build completed assessment data
     completed_assessment_data = []
     for assessment in completed_assessments:
-        result = AssessmentResult.objects.filter(user=user, assessment=assessment).first()
+        all_attempts = AssessmentResult.objects.filter(user=user, assessment=assessment, status='Completed')
+    
+        # ✅ Use latest attempt
+        latest_result = all_attempts.order_by('-submitted_at').first()
+
+        # ✅ Use retake_count from model (fix)
+        retake_count = latest_result.retake_count if latest_result else 0
+
+        allow_retake = False
+        if assessment.allow_retake:
+            if assessment.max_retakes is None or retake_count < assessment.max_retakes:
+                allow_retake = True
+
         completed_assessment_data.append({
             'assessment': assessment,
-            'score': result.score if result else None,
-            'allow_retake': assessment.allow_retake,
+            'score': latest_result.score if latest_result else None,
+            'allow_retake': allow_retake,
+            'retake_count': retake_count,
+            'max_retakes': assessment.max_retakes,
             'time_limit': assessment.time_limit,
         })
 
-    # Add time_limit and retake info to pending assessments too
+
+    # Build pending assessment data
     pending_assessment_data = []
     for assessment in pending_assessments:
         pending_assessment_data.append({
             'assessment': assessment,
             'allow_retake': assessment.allow_retake,
             'time_limit': assessment.time_limit,
+            'retake_count': 0,
+            'max_retakes': assessment.max_retakes,
         })
 
     return render(request, 'users/employee_dashboard.html', {
         'pending_assessments': pending_assessment_data,
         'completed_assessments': completed_assessment_data,
     })
+
+
 
 
 
